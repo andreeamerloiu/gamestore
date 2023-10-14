@@ -1,50 +1,78 @@
-const client = require('./client');
-const util = require('util');
+const express = require('express');
+const router = express.Router();
 
 const REPLACE_ME = 'HELP REPLACE ME!!!!';
 
-// GET - /api/video-games - get all video games
-async function getAllVideoGames() {
-    try {
-        const { rows: videoGames } = await client.query(REPLACE_ME);
-        return videoGames;
-    } catch (error) {
-        throw new Error("Make sure you have replaced the REPLACE_ME placeholder.")
-    }
-}
-
-// GET - /api/video-games/:id - get a single video game by id
-async function getVideoGameById(id) {
-    try {
-        const { rows: [videoGame] } = await client.query(`
-            SELECT * FROM videoGames
-            WHERE id = $1;
-        `, [id]);
-        return videoGame;
-    } catch (error) {
-        throw error;
-    }
-}
-
-// POST - /api/video-games - create a new video game
-async function createVideoGame(body) {
-    // LOGIC GOES HERE
-}
-
-// PUT - /api/video-games/:id - update a single video game by id
-async function updateVideoGame(id, fields = {}) {
-    // LOGIC GOES HERE
-}
-
-// DELETE - /api/video-games/:id - delete a single video game by id
-async function deleteVideoGame(id) {
-    // LOGIC GOES HERE
-}
-
-module.exports = {
-    getAllVideoGames,
+const { getAllVideoGames,
     getVideoGameById,
     createVideoGame,
     updateVideoGame,
-    deleteVideoGame
-}
+    deleteVideoGame } = require('../db/videoGames');
+
+// GET - /api/video-games - get all video games
+router.get('/', async (req, res, next) => {
+    try {
+        const videoGames = await getAllVideoGames();
+        res.send(videoGames);
+    } catch (error) {
+        next(error);
+    }
+});
+
+// GET - /api/video-games/:id - get a single video game by id
+router.get('/:id', async (req, res, next) => {
+    try {
+        const videoGame = await getVideoGameById(REPLACE_ME);
+        res.send(videoGame);
+    } catch (error) {
+        next(error);
+    }
+});
+
+// POST - /api/video-games - create a new video game
+router.post('/', async (req, res, next) => {
+    try {
+        const videoGame = await createVideoGame(req.body);
+        const existingVideoGame = await getVideoGameById(videoGame.id);
+        if (existingVideoGame) {
+            res.send(existingVideoGame);
+        } else {
+            const newVideoGame = await createVideoGame(req.body);
+            if(newVideoGame) {
+                res.send(newVideoGame);
+            } else {
+                next({
+                    name: 'VideoGameCreationError',
+                    message: 'There was an error .'
+                });
+            }
+        }
+    } catch (error) {
+        next(error);
+    }
+});
+
+
+
+// PUT - /api/video-games/:id - update a single video game by id
+router.put('/:id', async (req, res, next) => {
+    try {
+        const videoGame = await updateVideoGame(req.params.id, req.body);
+        res.send(videoGame);
+    } catch (error) {
+        next(error);
+    }
+});
+
+// DELETE - /api/video-games/:id - delete a single video game by id
+router.delete('/:id', async (req, res, next) => {
+    try {
+        const videoGame = await deleteVideoGame(req.params.id);
+        res.send(videoGame);
+    } catch (error) {
+        next(error);
+    }
+});
+
+
+module.exports = router;
