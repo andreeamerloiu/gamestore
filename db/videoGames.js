@@ -1,78 +1,85 @@
-const express = require('express');
-const router = express.Router();
+const client = require('./client');
+const util = require('util');
 
 const REPLACE_ME = 'HELP REPLACE ME!!!!';
 
-const { getAllVideoGames,
+// GET - /api/video-games - get all video games
+async function getAllVideoGames() {
+    try {
+        const { rows: videoGames } = await client.query(REPLACE_ME);
+        return videoGames;
+    } catch (error) {
+        throw new Error("Make sure you have replaced the REPLACE_ME placeholder.")
+    }
+}
+
+// GET - /api/video-games/:id - get a single video game by id
+async function getVideoGameById(id) {
+    try {
+        const { rows: [videoGame] } = await client.query(`
+            SELECT * FROM videoGames
+            WHERE id = $1;
+        `, [id]);
+        return videoGame;
+    } catch (error) {
+        throw error;
+    }
+}
+
+// POST - /api/video-games - create a new video game
+async function createVideoGame(body) {
+    const { name, description, price, inStock, isPopular, imgUrl } = body;
+    try {
+        const { rows: [videoGame] } = await client.query(`
+            INSERT INTO videoGames(name, description, price, "inStock", "isPopular", "imgUrl")
+            VALUES($1, $2, $3, $4, $5, $6)
+            RETURNING *;
+        `, [name, description, price, inStock, isPopular, imgUrl]);
+        return videoGame;
+    } catch (error) {
+        throw error;
+    }
+}                                                       
+
+// PUT - /api/video-games/:id - update a single video game by id
+async function updateVideoGame(id, fields = {}) {
+    const setString = Object.keys(fields).map((key, index) => `"${key}"=$${index + 1}`).join(', ');
+    if (setString.length === 0) {
+        return;
+    }
+    try {
+        const { rows: [videoGame] } = await client.query(`
+            UPDATE videoGames
+            SET ${setString}
+            WHERE id=${id}
+            RETURNING *;
+        `, Object.values(fields));
+        return videoGame;
+    } catch (error) {
+        throw error;
+    }
+}
+
+
+// DELETE - /api/video-games/:id - delete a single video game by id
+async function deleteVideoGame(id) {
+    try {
+        const { rows: [videoGame] } = await client.query(`
+            DELETE FROM videoGames
+            WHERE id=$1
+            RETURNING *;
+        `, [id]);
+        return videoGame;
+    } catch (error) {
+        throw error;
+    }
+}
+
+
+module.exports = {
+    getAllVideoGames,
     getVideoGameById,
     createVideoGame,
     updateVideoGame,
-    deleteVideoGame } = require('../db/videoGames');
-
-// GET - /api/video-games - get all video games
-router.get('/', async (req, res, next) => {
-    try {
-        const videoGames = await getAllVideoGames();
-        res.send(videoGames);
-    } catch (error) {
-        next(error);
-    }
-});
-
-// GET - /api/video-games/:id - get a single video game by id
-router.get('/:id', async (req, res, next) => {
-    try {
-        const videoGame = await getVideoGameById(REPLACE_ME);
-        res.send(videoGame);
-    } catch (error) {
-        next(error);
-    }
-});
-
-// POST - /api/video-games - create a new video game
-router.post('/', async (req, res, next) => {
-    try {
-        const videoGame = await createVideoGame(req.body);
-        const existingVideoGame = await getVideoGameById(videoGame.id);
-        if (existingVideoGame) {
-            res.send(existingVideoGame);
-        } else {
-            const newVideoGame = await createVideoGame(req.body);
-            if(newVideoGame) {
-                res.send(newVideoGame);
-            } else {
-                next({
-                    name: 'VideoGameCreationError',
-                    message: 'There was an error .'
-                });
-            }
-        }
-    } catch (error) {
-        next(error);
-    }
-});
-
-
-
-// PUT - /api/video-games/:id - update a single video game by id
-router.put('/:id', async (req, res, next) => {
-    try {
-        const videoGame = await updateVideoGame(req.params.id, req.body);
-        res.send(videoGame);
-    } catch (error) {
-        next(error);
-    }
-});
-
-// DELETE - /api/video-games/:id - delete a single video game by id
-router.delete('/:id', async (req, res, next) => {
-    try {
-        const videoGame = await deleteVideoGame(req.params.id);
-        res.send(videoGame);
-    } catch (error) {
-        next(error);
-    }
-});
-
-
-module.exports = router;
+    deleteVideoGame
+}
