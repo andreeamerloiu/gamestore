@@ -6,13 +6,14 @@ const REPLACE_ME = 'HELP REPLACE ME!!!!';
 // GET - /api/video-games - get all video games
 async function getAllVideoGames() {
     try {
-        const { rows: videoGames } = await client.query(REPLACE_ME);
+        const { rows: videoGames } = await client.query(`
+            SELECT * FROM videogames;
+        `);
         return videoGames;
     } catch (error) {
-        throw new Error("Make sure you have replaced the REPLACE_ME placeholder.")
+        throw (error)
     }
 }
-
 // GET - /api/video-games/:id - get a single video game by id
 async function getVideoGameById(id) {
     try {
