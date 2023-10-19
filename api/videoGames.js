@@ -18,16 +18,17 @@ router.get('/', async (req, res, next) => {
         next(error);
     }
 });
+GET - /api/video-games/:id - get a single video game by id
 
-// GET - /api/video-games/:id - get a single video game by id
 router.get('/:id', async (req, res, next) => {
     try {
-        const videoGame = await getVideoGameById(REPLACE_ME);
+        const videoGame = await getVideoGameById(req.params.id);
         res.send(videoGame);
     } catch (error) {
         next(error);
     }
 });
+
 
 // POST - /api/video-games - create a new video game
 router.post('/', async (req, res, next) => {
